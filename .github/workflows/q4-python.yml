@@ -1,5 +1,7 @@
 name: Python
 
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,3 +23,19 @@ jobs:
 
       - name: Check
         run: python -m py_compile src/main.py
+
+      - name: Test
+        run: pytest
+
+      - name: Docker build
+        run: docker build -t api-python .
+
+      - name: Docker run
+        run: |
+          docker run -d --name api-python -p 8080:8080 api-python
+          for i in $(seq 1 10); do
+            curl -sf http://localhost:8080/healthy && exit 0
+            sleep 2
+          done
+          docker logs api-python
+          exit 1
